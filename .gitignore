@@ -1,0 +1,5 @@
+*.pdf
+bitwarden_*.txt
+*.json
+.venv
+venv
