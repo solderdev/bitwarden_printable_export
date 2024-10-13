@@ -1,4 +1,4 @@
-# Printable Export from Bitwarden / Vaultwarden
+# Printable Export from Bitwarden / Vaultwarden Password-Manager
 Generate printable PDF from Bitwarden JSON export.
 
 The focus is not on pretty tables, but fitting as much data as possible per page. I personally use a font size of 7.2. 400 entries take up around 8 pages (PDF, A4).
