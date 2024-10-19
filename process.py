@@ -3,6 +3,9 @@ import os
 import re
 
 output_filename = 'bitwarden_export_processed'
+WRITE_TXT = False
+WRITE_JSON = False
+WRITE_PDF = True
 
 # get list of files in directory
 files = os.listdir('.')
@@ -78,8 +81,9 @@ for item in items:
         item['login']['uris'] = [u['uri'] for u in item['login']['uris'] if 'uri' in u]
 
 # save list of dicts to json file
-with open(f'{output_filename}.json', 'w') as f:
-    json.dump(items, f, indent=2, ensure_ascii=False)
+if WRITE_JSON:
+    with open(f'{output_filename}.json', 'w') as f:
+        json.dump(items, f, indent=2, ensure_ascii=False)
 
 # create text lines for output
 output = []
@@ -92,10 +96,11 @@ for item in items:
     output.append(line)
 
 # write to text file
-with open(f'{output_filename}.txt', 'w') as f:
-    for line in output:
-        f.write(line.encode('unicode_escape').decode())
-        f.write('\n')
+if WRITE_TXT:
+    with open(f'{output_filename}.txt', 'w') as f:
+        for line in output:
+            f.write(line.encode('unicode_escape').decode())
+            f.write('\n')
 
 
 # write to pdf
@@ -110,7 +115,8 @@ def create_pdf(strings, file_name="output.pdf"):
     
     # Define the margins and line height
     x_offset = 20
-    y_offset = height - 20  # Start near the top of the page
+    y_offset_init = height - 25
+    y_offset = y_offset_init  # Start near the top of the page
     usable_width = width - 2 * x_offset  # Calculate the usable width for the text
     
     # Set up the font
@@ -118,6 +124,9 @@ def create_pdf(strings, file_name="output.pdf"):
     font_size = 7.2
     line_height = font_size  # Adjust line height as necessary
     c.setFont(font_name, font_size)
+
+    # Page counter
+    page_num = 1
     
     # Function to wrap text based on the usable width
     def wrap_text(text, font_name, font_size, usable_width):
@@ -136,6 +145,13 @@ def create_pdf(strings, file_name="output.pdf"):
             wrapped_lines.append(line.strip())
         return wrapped_lines
     
+    # Function to add page number at the bottom of the page
+    def add_page_number(page_num):
+        page_number_text = f"Page {page_num}"
+        # Calculate position for centered page number
+        page_number_width = stringWidth(page_number_text, font_name, font_size)
+        c.drawString((width - page_number_width) / 2, 15, page_number_text)  # Position at bottom (10 units above the bottom)
+    
     # Process each string
     for string in strings:
         # Wrap the string into multiple lines to fit the page width
@@ -144,16 +160,20 @@ def create_pdf(strings, file_name="output.pdf"):
         # Write each line to the PDF
         for line in wrapped_lines:
             if y_offset <= 20:  # Check if we need to start a new page
+                add_page_number(page_num)
+                page_num += 1
                 c.showPage()  # End current page
                 c.setFont(font_name, font_size)  # Reset the font after the new page
-                y_offset = height - 20  # Reset the y position
+                y_offset = y_offset_init  # Reset the y position
             
             c.drawString(x_offset, y_offset, line)
             y_offset -= line_height  # Move down to the next line
 
+    add_page_number(page_num)
     # Save the PDF
     c.save()
 
-create_pdf(output, f"{output_filename}.pdf")
+if WRITE_PDF:
+    create_pdf(output, f"{output_filename}.pdf")
 
 print('done')
